@@ -99,10 +99,14 @@ class Game:
                     moving = False
                 #print(moving)
     def move(self):
+
         self.check_collision(self.player1, self.p1_moving)
         self.check_collision(self.player2, self.p2_moving)
-        for (player , moving) in [(self.player1, self.p1_moving) , (self.player2 , self.p2_moving)]:
-            if moving[0]:
+        for index , (player , moving) in enumerate([(self.player1, self.p1_moving) , (self.player2 , self.p2_moving)]):
+            flag = True
+            if self.escape_timer[(index +1 )% 2] and time.time() - self.escape_timer[(index+1) % 2]< self.ESCAPE_TIME and player[3]:
+                flag = False       
+            if moving[0] and flag:
                 player[0] += self.vector[player[2]][0] * self.SPEED
                 player[1] += self.vector[player[2]][1] * self.SPEED
 
@@ -152,16 +156,21 @@ class Game:
 
     def ghosts_move(self):
         self.check_collision_ghosts()
-        for ghost in self.ghosts:
-            if not ghost[-1]:
-                #print('hit')
-                ghost[2] = random.choice(self.crosses[tuple(ghost[0:2])])
-                ghost[-1] = True
-                ghost[0] += self.vector[ghost[2]][0] * self.SPEED
-                ghost[1] += self.vector[ghost[2]][1] * self.SPEED
-            else:
-                ghost[0] += self.vector[ghost[2]][0] * self.SPEED
-                ghost[1] += self.vector[ghost[2]][1] * self.SPEED
+        for index , ghost in enumerate(self.ghosts):
+            flag = True
+            if self.escape_timer[index // 2] and time.time()-self.escape_timer[index // 2] < self.ESCAPE_TIME:
+                flag = False
+
+            if flag:
+                if not ghost[-1]:
+                    #print('hit')
+                    ghost[2] = random.choice(self.crosses[tuple(ghost[0:2])])
+                    ghost[-1] = True
+                    ghost[0] += self.vector[ghost[2]][0] * self.SPEED
+                    ghost[1] += self.vector[ghost[2]][1] * self.SPEED
+                else:
+                    ghost[0] += self.vector[ghost[2]][0] * self.SPEED
+                    ghost[1] += self.vector[ghost[2]][1] * self.SPEED
 
     def check_collision_ghosts(self):
         for ghost in self.ghosts:
@@ -191,8 +200,7 @@ class Game:
                 self.ghosts[2 *index][-2] = 0
                 self.ghosts[2 *index + 1][-2] = 0
                 self.escape_timer[index] = 0
-
-                
+             
         for index ,(player, gain, ghosts) in enumerate(((self.player1 ,self.p1_gain , self.ghosts[0:2]), (self.player2 , self.p2_gain , self.ghosts[2:4]))):
             if not player[-1] : 
                 # ensure that is in pacman mode
@@ -201,8 +209,6 @@ class Game:
                         for ghost in ghosts:
                             ghost[-2] = 1 # escape mode
                             self.escape_timer[index] = time.time()
-
-
                         gain.append(coin)
         for coin in (self.p1_gain + self.p2_gain):
             if coin in self.big_coins:
@@ -219,7 +225,8 @@ class Game:
             if index in (0,1):
                 if self.player1[0] - self.big_R<ghost[0]< self.player1[0] + self.big_R and self.player1[1] - self.big_R < ghost[1] < self.player1[1] + self.big_R:
                     if ghost[-2] == 0:
-                        self.p1_lose[0]= True
+                        #self.p1_lose[0]= True
+                        pass
                     else:
                         # return it to cage
                         ghost[0] , ghost[1] = 11*self.UNIT , 13 * self.UNIT
